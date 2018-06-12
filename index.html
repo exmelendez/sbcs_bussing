@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <center>
+      <input id="idField" type="text" name="studentID" placeholder="Student ID">
+      <input id="submitBtn" type="button" onclick="onSubmit()" value="Submit">
+      <div id="msgDiv"></div>
+    </center>
+    
+    <script>
+    
+      var fieldText = document.getElementById("idField");
+      fieldText.addEventListener("keyup", function(event) {
+        
+        event.preventDefault();
+        if (event.keyCode === 13) {
+          document.getElementById("submitBtn").click();
+        }
+      });
+    
+      function onSubmit(){
+          document.getElementById("submitBtn").disabled = true;
+          var msgDiv = document.getElementById("msgDiv");
+          msgDiv.innerHTML = "";
+          var fieldText = document.getElementById("idField").value;
+          google.script.run.withSuccessHandler(onSuccess).log(fieldText);
+      }
+      
+      function onSuccess(statusMsg){
+          document.getElementById("idField").value = "";
+          var msgDiv = document.getElementById("msgDiv");
+          msgDiv.innerHTML = statusMsg;
+          document.getElementById("submitBtn").disabled = false;
+      }
+    </script>
+  </body>
+</html>
+
+
