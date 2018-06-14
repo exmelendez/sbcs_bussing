@@ -16,13 +16,17 @@ function log(fieldText){
   
   var id = parseInt(fieldText, 10);
   var idArray = idPresent(id);
+  var timeOfDay = AMPM();
   
   if(idArray[0] != 0){
-    addDataToSS (idArray[0], idArray[1]);
-    return "ID found";
+    if (alreadyLogged(idArray[0], timeOfDay)){
+      return idArray[1] + " already logged for " + timeOfDay + " attendance today."
+    } else {
+        addDataToSS (idArray[0], idArray[1]);
+        return idArray[1] + " logged.";
+    }
   }
-  
-  return "ID not found";
+  return "ID # " + id + " not found";
 }
 
 /* Searches the Google Sheet for
@@ -48,11 +52,73 @@ function idPresent(id){
   return idSearchResults;
 }
 
+function alreadyLogged(id, timeOfDay){
+  
+  var currentDate = createTimeStamp("currentDate");
+  var attendanceLog = logSheet.getRange(2, 1, logSheet.getLastRow(), logSheet.getLastColumn()).getValues();
+  
+  for (var i = 0; i < attendanceLog.length; i++){
+    var ssTimeObject = attendanceLog[i][3].toString();
+    var ssDateObject = attendanceLog[i][2].toString();
+    var hourStr = ssTimeObject.charAt(16) + ssTimeObject.charAt(17);
+    var logTimeOfDay = AMPMExtract(hourStr);
+    var logDate = "";
+    
+    for (var j = 4; j < 15; j++){
+        logDate += ssDateObject.charAt(j);
+    }
+    
+    if (attendanceLog[i][0] === id && logDate === currentDate && logTimeOfDay === timeOfDay){
+      return true;
+    }
+  }
+  return false;
+}
+
 /* Adds a row w/ specified data 
    to log spreadsheet.
 **************************************/
 function addDataToSS (id, name) {
   logSheet.appendRow([id,name, createTimeStamp("currentDate"), createTimeStamp("time")]);
+}
+
+/* Returns "AM", "PM" or "Invalid Hour"
+   based on the current hour.
+**************************************/
+function AMPM(){
+  var currentHourStr = createTimeStamp("hourTime");
+  var currentHourNum = parseInt(currentHourStr, 10);
+  
+  if (currentHourNum < 7){
+    return "Invalid Hour";
+  } else if (currentHourNum > 6 && currentHourNum < 11) {
+    //returns "AM" between the hours of 6am to 10am
+    return "AM";
+  } else if (currentHourNum > 10 && currentHourNum < 18) {
+    //returns "PM" between the hours of 11am to 5pm
+    return "PM";
+  } else if (currentHourNum > 17) {
+    return "Invalid Hour";
+  }
+}
+
+/* Returns "AM", "PM" or "Invalid Hour"
+   based on given parameter hour.
+**************************************/
+function AMPMExtract(time){
+  var currentHourNum = parseInt(time, 10);
+  
+  if (currentHourNum < 7){
+    return "Invalid Hour";
+  } else if (currentHourNum > 6 && currentHourNum < 11) {
+    //returns "AM" between the hours of 6am to 10am
+    return "AM";
+  } else if (currentHourNum > 10 && currentHourNum < 18) {
+    //returns "PM" between the hours of 11am to 5pm
+    return "PM";
+  } else if (currentHourNum > 17) {
+    return "Invalid Hour";
+  }
 }
 
 //returns a string of the full current date by default or can be filtered by string keyword for a specific part of the string date.
@@ -70,6 +136,8 @@ function createTimeStamp(input){
         return date.charAt(11) + date.charAt(12) + date.charAt(13) + date.charAt(14);
     case "time":
         return date.charAt(16) + date.charAt(17) + date.charAt(18) + date.charAt(19) + date.charAt(20) + date.charAt(21) + date.charAt(22) + date.charAt(23);
+    case "hourTime":
+        return date.charAt(16) + date.charAt(17);
     case "currentDate":
         return date.charAt(4) + date.charAt(5) + date.charAt(6) + " " + date.charAt(8) + date.charAt(9) + " " + date.charAt(11) + date.charAt(12) + date.charAt(13) + date.charAt(14);
     default: 
